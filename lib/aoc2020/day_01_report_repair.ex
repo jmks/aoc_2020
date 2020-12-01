@@ -25,18 +25,52 @@ For example, suppose your expense report contained the following:
 In this list, the two entries that sum to 2020 are 1721 and 299. Multiplying them together produces 1721 * 299 = 514579, so the correct answer is 514579.
 
 Of course, your expense report is much larger. Find the two entries that sum to 2020; what do you get if you multiply them together?
+
+--- Part Two ---
+
+  The Elves in accounting are thankful for your help; one of them even offers you a starfish coin they had left over from a past vacation. They offer you a second one if you can find three numbers in your expense report that meet the same criteria.
+
+  Using the above example again, the three entries that sum to 2020 are 979, 366, and 675. Multiplying them together produces the answer, 241861950.
+
+  In your expense report, what is the product of the three entries that sum to 2020?
 """
 
-  def sum_to_twenty_twenty(numbers) do
+  def sum_to(numbers, summand) do
     numbers = MapSet.new(numbers)
 
-    one = Enum.find(numbers, fn number ->
-      addend = 2020 - number
+    {:ok, addends} = find_two(numbers, summand)
+    addends
+  end
 
-      MapSet.member?(numbers, addend)
+  def three_numbers_summing_to_twenty_twenty(numbers) do
+    numbers = MapSet.new(numbers)
+
+    Enum.find_value(numbers, fn number ->
+      remainder = 2020 - number
+
+      case find_two(numbers, remainder) do
+        {:ok, addends} ->
+          MapSet.put(addends, number)
+
+        :none ->
+          false
+      end
     end)
-    two = 2020 - one
+  end
 
-    MapSet.new([one, two])
+  defp find_two(numbers_map, summand) do
+    one = Enum.find(numbers_map, fn number ->
+      addend = summand - number
+
+      MapSet.member?(numbers_map, addend)
+    end)
+
+    if one do
+      two = summand - one
+
+      {:ok, MapSet.new([one, two])}
+    else
+      :none
+    end
   end
 end
