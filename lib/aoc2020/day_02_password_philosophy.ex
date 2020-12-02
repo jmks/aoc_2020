@@ -37,10 +37,21 @@ Given the same example list from above:
 
 How many passwords are valid according to the new interpretation of the policies?
 """
+  def validate(strategy, str) do
+    {policy, password} = parse(str)
 
-  def validate_password(:letter_count, str) do
-    {{lower, upper, char}, password} = parse(str)
+    strategy.(policy, password)
+  end
 
+  def validate_by_letter_count(str) do
+    validate(&letter_count/2, str)
+  end
+
+  def validate_by_letter_positions(str) do
+    validate(&letter_positions/2, str)
+  end
+
+  def letter_count({lower, upper, char}, password) do
     count =
       password
       |> String.codepoints
@@ -50,11 +61,8 @@ How many passwords are valid according to the new interpretation of the policies
     lower <= count && count <= upper
   end
 
-  def validate_password(:letter_positions, str) do
-    {{lower, upper, char}, password} = parse(str)
-
+  def letter_positions({lower, upper, char}, password) do
     chars = String.codepoints(password)
-
     at_lower = Enum.at(chars, lower - 1) == char
     at_upper = Enum.at(chars, upper - 1) == char
 
@@ -63,7 +71,7 @@ How many passwords are valid according to the new interpretation of the policies
 
   def count_valid(strategy, policy_and_passwords) do
     policy_and_passwords
-    |> Enum.filter(&validate_password(strategy, &1))
+    |> Enum.filter(fn str -> validate(strategy, str) end)
     |> Enum.count
   end
 
