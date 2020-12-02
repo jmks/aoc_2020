@@ -9,6 +9,10 @@ defmodule Input do
     day |> raw |> lines |> to_ints
   end
 
+  def strings(day) do
+    day |> raw |> lines
+  end
+
   defp lines(input) do
     String.split(input, "\n")
   end
