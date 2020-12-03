@@ -68,4 +68,15 @@ defmodule Aoc2020.Day03TobogganTrajectoryTest do
     IO.puts("")
     IO.puts("Part 1: #{trees_encountered}")
   end
+
+  test "check more slopes" do
+    assert trees_along_slopes(@test_grid, [{1, 1}, {1, 3}, {1, 5}, {1, 7}, {2, 1}]) == 336
+  end
+
+  test "solve part 2" do
+    product = trees_along_slopes(Input.raw(3), [{1, 1}, {1, 3}, {1, 5}, {1, 7}, {2, 1}])
+
+    IO.puts("")
+    IO.puts("Part 2: #{product}")
+  end
 end
