@@ -56,11 +56,64 @@ defmodule Aoc2020.Day04PassportProcessingTest do
   end
 
   test "count valid" do
-    assert count_valid_passports(@raw) == 2
+    assert count_valid_passports(@raw, &has_required_fields?/1) == 2
   end
 
   test "solve part 1" do
     IO.puts("")
-    IO.puts("Part 1: #{count_valid_passports(Input.raw(4))}")
+    IO.puts("Part 1: #{count_valid_passports(Input.raw(4), &has_required_fields?/1)}")
+  end
+
+  test "validate passports" do
+    assert valid?(%{"byr" => "2002"}, [{"byr", [digits: 4, gte: 1920, lte: 2002]}])
+    refute valid?(%{"byr" => "2003"}, [{"byr", [digits: 4, gte: 1920, lte: 2002]}])
+    assert valid?(%{"byr" => "1920"}, [{"byr", [digits: 4, gte: 1920, lte: 2002]}])
+    refute valid?(%{"byr" => "1919"}, [{"byr", [digits: 4, gte: 1920, lte: 2002]}])
+    refute valid?(%{"byr" =>  "999"}, [{"byr", [digits: 4, gte: 1920, lte: 2002]}])
+  end
+
+  test "validation counts" do
+    invalid = """
+    eyr:1972 cid:100
+    hcl:#18171d ecl:amb hgt:170 pid:186cm iyr:2018 byr:1926
+
+    iyr:2019
+    hcl:#602927 eyr:1967 hgt:170cm
+    ecl:grn pid:012533040 byr:1946
+
+    hcl:dab227 iyr:2012
+    ecl:brn hgt:182cm pid:021572410 eyr:2020 byr:1992 cid:277
+
+    hgt:59cm ecl:zzz
+    eyr:2038 hcl:74454a iyr:2023
+    pid:3556412378 byr:2007
+    """
+
+    validator = fn data -> has_required_fields?(data) and valid?(data, standard_rules()) end
+    assert count_valid_passports(invalid, validator) == 0
+
+    valid = """
+    pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+    hcl:#623a2f
+
+    eyr:2029 ecl:blu cid:129 byr:1989
+    iyr:2014 pid:896056539 hcl:#a97842 hgt:165cm
+
+    hcl:#888785
+    hgt:164cm byr:2001 iyr:2015 cid:88
+    pid:545766238 ecl:hzl
+    eyr:2022
+
+    iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719
+    """
+
+    assert count_valid_passports(valid, validator) == 4
+  end
+
+  test "solve part 2" do
+    validator = fn data -> has_required_fields?(data) and valid?(data, standard_rules()) end
+
+    IO.puts("")
+    IO.puts("Part 2: #{count_valid_passports(Input.raw(4), validator)}")
   end
 end
