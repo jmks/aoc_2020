@@ -15,6 +15,16 @@ defmodule Aoc2020.Day07HandyHaversacksTest do
   dotted black bags contain no other bags.
   """
 
+  @test2 """
+  shiny gold bags contain 2 dark red bags.
+  dark red bags contain 2 dark orange bags.
+  dark orange bags contain 2 dark yellow bags.
+  dark yellow bags contain 2 dark green bags.
+  dark green bags contain 2 dark blue bags.
+  dark blue bags contain 2 dark violet bags.
+  dark violet bags contain no other bags.
+  """
+
   test "parsing rules" do
     assert parse("light red bags contain 1 bright white bag, 2 muted yellow bags.") == {"light red", %{"bright white" => 1, "muted yellow" => 2}}
     assert parse("dark orange bags contain 3 bright white bags, 4 muted yellow bags.") == {"dark orange", %{"bright white" => 3, "muted yellow" => 4}}
@@ -34,5 +44,19 @@ defmodule Aoc2020.Day07HandyHaversacksTest do
 
     IO.puts("")
     IO.puts("Part 1: #{result}")
+  end
+
+  test "bag of holding" do
+    rules = @test2 |> String.split("\n", trim: true) |> Enum.map(&parse/1) |> Enum.into(%{})
+
+    assert bags_contained(rules, "shiny gold") == 126
+  end
+
+  test "solve part 2" do
+    rules = Input.strings(7) |> Enum.map(&parse/1) |> Enum.into(%{})
+    result = bags_contained(rules, "shiny gold")
+
+    IO.puts("")
+    IO.puts("Part 2: #{result}")
   end
 end
