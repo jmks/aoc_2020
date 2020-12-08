@@ -98,6 +98,8 @@ How many individual bags are required inside your single shiny gold bag?
 
   defp contains?(rules_map, source, target) do
     do_contains?(rules_map, target, [source])
+
+    # TODO: want to reduce over this with a "growing" source??
   end
 
   defp do_contains?(_, _, []), do: false
