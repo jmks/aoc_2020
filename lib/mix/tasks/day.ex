@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Day do
 
     lib_path = "lib/aoc2020/day_#{day}_#{name}.ex"
     test_path = "test/aoc2020/day_#{day}_#{name}_test.exs"
+    data_path = "lib/data/#{day}"
 
     module_name = "Day#{day}#{camelize(name)}"
 
@@ -29,6 +30,8 @@ defmodule Mix.Tasks.Day do
       end
     end
     """)
+
+    create_file(data_path, "")
   end
 
   defp create_file(path, contents) do
