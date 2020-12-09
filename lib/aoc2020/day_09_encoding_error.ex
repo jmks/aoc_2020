@@ -46,6 +46,37 @@ Here is a larger example which only considers the previous 5 numbers (and has a 
 In this example, after the 5-number preamble, almost every number is the sum of two of the previous 5 numbers; the only number that does not follow this rule is 127.
 
 The first step of attacking the weakness in the XMAS data is to find the first number in the list (after the preamble) which is not the sum of two of the 25 numbers before it. What is the first number that does not have this property?
+
+  --- Part Two ---
+  The final step in breaking the XMAS encryption relies on the invalid number you just found: you must find a contiguous set of at least two numbers in your list which sum to the invalid number from step 1.
+
+  Again consider the above example:
+
+  35
+  20
+  15
+  25
+  47
+  40
+  62
+  55
+  65
+  95
+  102
+  117
+  150
+  182
+  127
+  219
+  299
+  277
+  309
+  576
+  In this list, adding up all of the numbers from 15 through 40 produces the invalid number from step 1, 127. (Of course, the contiguous set of numbers in your actual list might be much longer.)
+
+  To find the encryption weakness, add together the smallest and largest number in this contiguous range; in this example, these are 15 and 47, producing 62.
+
+  What is the encryption weakness in your XMAS-encrypted list of numbers?
 """
   defmodule TwoSumSlidingWindow do
     defstruct [:size, :values, :lookup]
@@ -76,6 +107,34 @@ The first step of attacking the weakness in the XMAS data is to find the first n
     end
   end
 
+  defmodule RollingSum do
+    defstruct [:target, :ranges]
+
+    def new(target) do
+      %__MODULE__{target: target, ranges: []}
+    end
+
+    def validate(roll) do
+      Enum.find(roll.ranges, fn range ->
+        length(range) >= 2 and Enum.sum(range) == roll.target
+      end)
+    end
+
+    def add(roll, number) do
+      if Enum.empty?(roll.ranges) do
+        %{roll | ranges: [[number]]}
+      else
+        updated_ranges =
+          roll.ranges
+          |> Enum.map(fn range -> [number | range] end)
+          |> Enum.filter(fn range -> Enum.sum(range) <= roll.target end)
+        new_range = [number]
+
+        %{roll | ranges: [new_range | updated_ranges]}
+      end
+    end
+  end
+
   def find_first_invalid(_two_sum, []), do: nil
 
   def find_first_invalid(two_sum, [value | values]) do
@@ -85,6 +144,26 @@ The first step of attacking the weakness in the XMAS data is to find the first n
       find_first_invalid(new_two_sum, values)
     else
       value
+    end
+  end
+
+  def find_rolling_sum_of(target, values) do
+    roll = RollingSum.new(target)
+
+    find_sum(roll, values)
+  end
+
+  defp find_sum(_roll, []), do: nil
+
+  defp find_sum(roll, [value | values]) do
+    new_roll = RollingSum.add(roll, value)
+
+    case RollingSum.validate(new_roll) do
+      nil ->
+        find_sum(new_roll, values)
+
+      range ->
+        range
     end
   end
 end
