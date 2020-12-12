@@ -45,8 +45,31 @@ defmodule Aoc2020.Day11SeatingSystemTest do
     IO.puts("Part 1: #{Seats.occupied(seats)}")
   end
 
+  test "arrival by visibility" do
+    seats =
+      @test_grid
+      |> String.split("\n", trim: true)
+      |> Seats.new(:visible)
+      |> arrivals_until_stable
+
+    assert Seats.occupied(seats) == 26
+  end
+
+  test "solve part 2" do
+    seats =
+      Input.strings(11)
+      |> Seats.new(:visible)
+      |> arrivals_until_stable
+
+    IO.puts("")
+    IO.puts("Part 2: #{Seats.occupied(seats)}")
+  end
+
   defp arrivals_until_stable(seats) do
     new_seats = Seats.round_of_arrivals(seats)
+
+    # IO.puts ""
+    # IO.puts Seats.to_string(new_seats)
 
     if Seats.changes?(new_seats) do
       arrivals_until_stable(new_seats)
