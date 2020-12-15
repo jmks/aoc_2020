@@ -2,7 +2,7 @@ defmodule Aoc2020.Day12RainRiskTest do
   use ExUnit.Case, async: true
 
   import Aoc2020.Day12RainRisk
-  alias Aoc2020.Day12RainRisk.Ship
+  alias Aoc2020.Day12RainRisk.{Ship, Waypoint, Displacement}
 
   test "parsing instructions" do
     assert parse_instruction("W1") == {:west, 1}
@@ -33,6 +33,31 @@ defmodule Aoc2020.Day12RainRiskTest do
 
     IO.puts("")
     IO.puts("Part 1: #{distance}")
+  end
+
+  test "follow the waypoint" do
+    waypoint =
+      test_instructions()
+      |> Enum.reduce(Waypoint.new, fn instr, waypoint ->
+        new_waypoint = Waypoint.navigate(waypoint, instr)
+
+        new_waypoint
+      end)
+
+    assert Waypoint.distance_travelled(waypoint) == 286
+  end
+
+  test "part 2" do
+    result =
+      Input.strings(12)
+      |> Enum.map(&parse_instruction/1)
+      |> Enum.reduce(Waypoint.new, fn instr, waypoint ->
+        Waypoint.navigate(waypoint, instr)
+      end)
+      |> Waypoint.distance_travelled
+
+    IO.puts("")
+    IO.puts("Part 2: #{result}")
   end
 
   def test_instructions do
