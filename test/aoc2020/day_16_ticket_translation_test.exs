@@ -19,6 +19,20 @@ defmodule Aoc2020.Day16TicketTranslationTest do
   38,6,12
   """ |> String.split("\n")
 
+  @test2 """
+  class: 0-1 or 4-19
+  row: 0-5 or 8-19
+  seat: 0-13 or 16-19
+
+  your ticket:
+  11,12,13
+
+  nearby tickets:
+  3,9,18
+  15,1,5
+  5,14,9
+  """ |> String.split("\n")
+
   test "parsing" do
     assert Info.parse(@test) == %Info{
       constraints: %{
@@ -45,5 +59,29 @@ defmodule Aoc2020.Day16TicketTranslationTest do
 
     IO.puts("")
     IO.puts("Part 1: #{result}")
+  end
+
+  test "column assignments" do
+    info = @test2 |> Info.parse |> Info.discard_invalid_tickets
+
+    assert Info.column_assignment(info) == ["row", "class", "seat"]
+  end
+
+  test "part 2" do
+    info =
+      Input.strings(16)
+      |> Info.parse
+      |> Info.discard_invalid_tickets
+
+    result =
+    info
+    |> Info.column_assignment
+    |> Enum.zip(info.mine)
+    |> Enum.filter(fn {field, _} -> String.starts_with?(field, "departure") end)
+    |> Enum.map(&elem(&1, 1))
+    |> Enum.reduce(1, &Kernel.*/2)
+
+    IO.puts("")
+    IO.puts("Part 2: #{result}")
   end
 end

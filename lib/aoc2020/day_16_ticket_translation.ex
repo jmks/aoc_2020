@@ -39,6 +39,30 @@ nearby tickets:
 It doesn't matter which position corresponds to which field; you can identify invalid nearby tickets by considering only whether tickets contain values that are not valid for any field. In this example, the values on the first nearby ticket are all valid for at least one field. This is not true of the other three nearby tickets: the values 4, 55, and 12 are are not valid for any field. Adding together all of the invalid values produces your ticket scanning error rate: 4 + 55 + 12 = 71.
 
 Consider the validity of the nearby tickets you scanned. What is your ticket scanning error rate?
+
+--- Part Two ---
+
+Now that you've identified which tickets contain invalid values, discard those tickets entirely. Use the remaining valid tickets to determine which field is which.
+
+Using the valid ranges for each field, determine what order the fields appear on the tickets. The order is consistent between all tickets: if seat is the third field, it is the third field on every ticket, including your ticket.
+
+For example, suppose you have the following notes:
+
+class: 0-1 or 4-19
+row: 0-5 or 8-19
+seat: 0-13 or 16-19
+
+your ticket:
+11,12,13
+
+nearby tickets:
+3,9,18
+15,1,5
+5,14,9
+
+Based on the nearby tickets in the above example, the first position must be row, the second position must be class, and the third position must be seat; you can conclude that in your ticket, class is 12, row is 11, and seat is 13.
+
+Once you work out which field is which, look for the six fields on your ticket that start with the word departure. What do you get if you multiply those six values together?
 """
 
   defmodule Info do
@@ -65,6 +89,66 @@ Consider the validity of the nearby tickets you scanned. What is your ticket sca
         mine: parse_tickets(your_ticket) |> hd,
         nearby: parse_tickets(nearby_tickets)
       }
+    end
+
+    def discard_invalid_tickets(info) do
+      ranges = info.constraints |> Map.values |> List.flatten
+      in_some_range = fn value -> Enum.any?(ranges, fn range -> value in range end) end
+
+      valid_nearby = Enum.filter(info.nearby, fn ticket ->
+        Enum.all?(ticket, in_some_range)
+      end)
+
+      %{info | nearby: valid_nearby}
+    end
+
+    def column_assignment(info) do
+      info.nearby
+      |> Enum.zip
+      |> Enum.map(&Tuple.to_list/1)
+      |> Enum.with_index
+      |> options_for_columns(info.constraints)
+      |> valid_assignment
+    end
+
+    defp options_for_columns(columns, constraints) do
+      Enum.reduce(constraints, %{}, fn {name, constraints}, assignment ->
+        valid_indexes =
+          columns
+          |> Enum.filter(fn {column, _index} ->
+          Enum.all?(column, fn value ->
+            Enum.any?(constraints, fn range -> value in range end)
+          end)
+        end)
+        |> Enum.map(fn {_, index} -> index end)
+
+        Map.put(assignment, name, valid_indexes)
+      end)
+    end
+
+    defp valid_assignment(options) do
+      if Enum.all?(options, fn {_, v} -> length(v) == 1 end) do
+        options
+        |> Enum.map(fn {k, v} -> {v, k} end)
+        |> Enum.sort_by(fn {i, _} -> i end)
+        |> Enum.map(fn {_, v} -> v end)
+      else
+        assigned =
+          options
+          |> Enum.filter(fn {_, v} -> length(v) == 1 end)
+          |> Enum.flat_map(fn {_, v} -> v end)
+          |> Enum.into(MapSet.new)
+
+        assignments_removed = Enum.reduce(options, %{}, fn {field, valid_indexes}, acc ->
+          if length(valid_indexes) == 1 do
+            Map.put(acc, field, valid_indexes)
+          else
+            Map.put(acc, field, Enum.filter(valid_indexes, fn index -> index not in assigned end))
+          end
+        end)
+
+        valid_assignment(assignments_removed)
+      end
     end
 
     defp parse_constraints(constraints) do
