@@ -66,6 +66,18 @@ defmodule Aoc2020.Day15RambunctiousRecitationTest do
     IO.puts("Part 1: #{said}")
   end
 
+  test "30000000th number" do
+    # 50s is fast enough :smile:
+    assert said_on_turn(MemoryGame.new("0,3,6"), 30000000) == 175594
+  end
+
+  test "part 2" do
+    said = said_on_turn(MemoryGame.new(Input.raw(15)), 30000000)
+
+    IO.puts("")
+    IO.puts("Part 1: #{said}")
+  end
+
   defp said_on_turn(game, turn) do
     diff = turn - game.turn + 1
     game = Enum.reduce(1..diff, game, fn _, g ->
