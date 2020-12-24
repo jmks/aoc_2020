@@ -172,6 +172,14 @@ After updating rules 8 and 11, how many messages completely match rule 0?
 
     defp do_accepts([], message, _), do: [{:ok, message}]
 
+    defp do_accepts([rule], message, rules_map) do
+      machine = Map.get(rules_map, rule)
+
+      machine
+      |> StateMachine.accepts(message, rules_map)
+      |> Enum.filter(&is_tuple/1)
+    end
+
     defp do_accepts([rule | rules], message, rules_map) do
       machine = Map.get(rules_map, rule)
 
@@ -179,7 +187,7 @@ After updating rules 8 and 11, how many messages completely match rule 0?
       |> StateMachine.accepts(message, rules_map)
       |> Enum.filter(&is_tuple/1)
       |> Enum.flat_map(fn
-        {:ok, ""} -> [{:ok, ""}]
+        {:ok, ""} -> [false] # out of characters!
         {:ok, rest} -> do_accepts(rules, rest, rules_map)
       end)
       |> Enum.filter(&is_tuple/1)
@@ -236,7 +244,7 @@ After updating rules 8 and 11, how many messages completely match rule 0?
     end)
   end
 
-  defp map_machines(rules) do
+  def map_machines(rules) do
     rules
     |> Enum.map(fn
       {number, [letter]} when is_binary(letter) ->
@@ -245,8 +253,8 @@ After updating rules 8 and 11, how many messages completely match rule 0?
       {number, [conditions]} ->
         {number, Sequence.new(conditions)}
 
-      {number, [left, right]} ->
-        {number, OneOf.new([left, right])}
+      {number, options} ->
+        {number, OneOf.new(options)}
 
     end)
     |> Enum.into(%{})
@@ -262,7 +270,7 @@ After updating rules 8 and 11, how many messages completely match rule 0?
   defp parse_condition(condition) do
     case String.split(condition, " | ", parts: 2) do
       [left, right] ->
-        [String.split(left, " ", parts: 2), String.split(right, " ", parts: 2)]
+        [String.split(left, " ", trim: true), String.split(right, " ", trim: true)]
 
       _ ->
         [String.split(condition, " ")]
