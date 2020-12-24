@@ -92,23 +92,23 @@ defmodule Aoc2020.Day19MonsterMessagesTest do
   test "state machines" do
     lc = LetterChomper.new("a")
 
-    assert {:ok, "pple"} == StateMachine.accepts(lc, "apple", %{})
-    assert {:ok, "apple"} == StateMachine.accepts(lc, "aapple", %{})
-    assert false == StateMachine.accepts(lc, "banana", %{})
+    assert [{:ok, "pple"}] == StateMachine.accepts(lc, "apple", %{})
+    assert [{:ok, "apple"}] == StateMachine.accepts(lc, "aapple", %{})
+    assert [] == StateMachine.accepts(lc, "banana", %{})
 
     seq = Sequence.new(["1","1","1"])
 
-    assert {:ok, ""} == StateMachine.accepts(seq, "aaa", %{"1" => lc})
-    assert {:ok, "bb"} == StateMachine.accepts(seq, "aaabb", %{"1" => lc})
-    assert false == StateMachine.accepts(seq, "aab", %{"1" => lc})
+    assert [{:ok, ""}] == StateMachine.accepts(seq, "aaa", %{"1" => lc})
+    assert [{:ok, "bb"}] == StateMachine.accepts(seq, "aaabb", %{"1" => lc})
+    assert [] == StateMachine.accepts(seq, "aab", %{"1" => lc})
 
     b = LetterChomper.new("b")
     oneof = OneOf.new([["1", "2"], ["2", "1"]])
     map = %{"1" => lc, "2" => b}
 
-    assert {:ok, ""} == StateMachine.accepts(oneof, "ab", map)
-    assert {:ok, ""} == StateMachine.accepts(oneof, "ba", map)
-    assert false == StateMachine.accepts(oneof, "bb", map)
+    assert [{:ok, ""}] == StateMachine.accepts(oneof, "ab", map)
+    assert [{:ok, ""}] == StateMachine.accepts(oneof, "ba", map)
+    assert [] == StateMachine.accepts(oneof, "bb", map)
   end
 
   test "satisfies?" do
