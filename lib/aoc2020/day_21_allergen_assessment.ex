@@ -21,6 +21,19 @@ The first food in the list has four ingredients (written in a language you don't
 The first step is to determine which ingredients can't possibly contain any of the allergens in any food in your list. In the above example, none of the ingredients kfcds, nhms, sbzzf, or trh can contain an allergen. Counting the number of times any of these ingredients appear in any ingredients list produces 5: they all appear once each except sbzzf, which appears twice.
 
 Determine which ingredients cannot possibly contain any of the allergens in your list. How many times do any of those ingredients appear?
+
+--- Part Two ---
+Now that you've isolated the inert ingredients, you should have enough information to figure out which ingredient contains which allergen.
+
+In the above example:
+
+mxmxvkd contains dairy.
+sqjhc contains fish.
+fvjkl contains soy.
+
+Arrange the ingredients alphabetically by their allergen and separate them by commas to produce your canonical dangerous ingredient list. (There should not be any spaces in your canonical dangerous ingredient list.) In the above example, this would be mxmxvkd,sqjhc,fvjkl.
+
+Time to stock your raft with supplies. What is your canonical dangerous ingredient list?
 """
   def parse(food_list) do
     Enum.map(food_list, fn entry ->
@@ -38,6 +51,14 @@ Determine which ingredients cannot possibly contain any of the allergens in your
 
       count + ingredient_count
     end)
+  end
+
+  def dangerous_ingredient_list(foods) do
+    possible_allergen_ingredients(foods)
+    |> resolve_allergens(%{}, MapSet.new)
+    |> Enum.sort_by(fn {allergen, _} -> allergen end)
+    |> Enum.map(fn {_, ingredient} -> ingredient end)
+    |> Enum.join(",")
   end
 
   def allergen_free_ingredients(foods) do
@@ -61,5 +82,31 @@ Determine which ingredients cannot possibly contain any of the allergens in your
         end)
       end)
     end)
+  end
+
+  defp resolve_allergens(possibilities, resolved, _) when possibilities == %{}, do: resolved
+
+  defp resolve_allergens(possibilities, resolved, resolved_ingredients) do
+    newly_resolved =
+      possibilities
+      |> Enum.map(fn {allergen, ingredients} ->
+        unresolved = MapSet.difference(ingredients, resolved_ingredients)
+
+        {allergen, unresolved}
+      end)
+      |> Enum.filter(fn {_, ingredients} -> MapSet.size(ingredients) == 1 end)
+      |> Enum.map(fn {allergen, ingredients} -> {allergen, ingredients |> Enum.into([]) |> hd} end)
+
+    new_possibilities = Enum.reduce(newly_resolved, possibilities, fn {allergen, _ingredient}, map ->
+      Map.delete(map, allergen)
+    end)
+    new_resolved = Enum.reduce(newly_resolved, resolved, fn {allergen, ingredient}, map ->
+      Map.put(map, allergen, ingredient)
+    end)
+    new_resolved_ingredients = Enum.reduce(newly_resolved, resolved_ingredients, fn {_, ingredient}, set ->
+      MapSet.put(set, ingredient)
+    end)
+
+    resolve_allergens(new_possibilities, new_resolved, new_resolved_ingredients)
   end
 end

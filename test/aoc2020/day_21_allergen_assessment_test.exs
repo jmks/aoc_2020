@@ -29,4 +29,15 @@ defmodule Aoc2020.Day21AllergenAssessmentTest do
     IO.puts("Part 1: #{result}")
     IO.puts("")
   end
+
+  test "dangerous ingredient list" do
+    assert dangerous_ingredient_list(@food_list |> parse) == "mxmxvkd,sqjhc,fvjkl"
+  end
+
+  test "part 2" do
+    result = Input.strings(21) |> parse |> dangerous_ingredient_list
+
+    IO.puts("Part 2: #{result}")
+    IO.puts("")
+  end
 end
