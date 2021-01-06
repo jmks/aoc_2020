@@ -73,6 +73,19 @@ defmodule Aoc2020.Day23CrabCups do
   After the crab is done, what order will the cups be in? Starting after the cup labeled 1, collect the other cups' labels clockwise into a single string with no extra characters; each number except 1 should appear exactly once. In the above example, after 10 moves, the cups clockwise from 1 are labeled 9, 2, 6, 5, and so on, producing 92658374. If the crab were to complete all 100 moves, the order after cup 1 would be 67384529.
 
   Using your labeling, simulate 100 moves. What are the labels on the cups after cup 1?
+
+  --- Part Two ---
+  Due to what you can only assume is a mistranslation (you're not exactly fluent in Crab), you are quite surprised when the crab starts arranging many cups in a circle on your raft - one million (1000000) in total.
+
+  Your labeling is still correct for the first few cups; after that, the remaining cups are just numbered in an increasing fashion starting from the number after the highest number in your list and proceeding one by one until one million is reached. (For example, if your labeling were 54321, the cups would be numbered 5, 4, 3, 2, 1, and then start counting up from 6 until one million is reached.) In this way, every number from one through one million is used exactly once.
+
+  After discovering where you made the mistake in translating Crab Numbers, you realize the small crab isn't going to do merely 100 moves; the crab is going to do ten million (10000000) moves!
+
+  The crab is going to hide your stars - one each - under the two cups that will end up immediately clockwise of cup 1. You can have them if you predict what the labels on those cups will be when the crab is finished.
+
+  In the above example (389125467), this would be 934001 and then 159792; multiplying these together produces 149245887792.
+
+  Determine which two cups will end up immediately clockwise of cup 1. What do you get if you multiply their labels together?
   """
   defmodule CyclicZipperList do
     def new(list) do
@@ -200,5 +213,84 @@ defmodule Aoc2020.Day23CrabCups do
         do_find_destination(target - 1, rest_lookup)
       end
     end
+  end
+
+  defmodule QuickCircle do
+    defstruct [:successors, :current, :top_values]
+
+    def new(cups) do
+      successors = with_successor(cups, hd(cups)) |> Enum.into(%{})
+      top_values = Enum.sort(cups, :desc) |> Enum.take(4)
+
+      %__MODULE__{successors: successors, current: hd(cups), top_values: top_values}
+    end
+
+    def move(qc) do
+      [head, _, last] = removed = read(qc, qc.current, 3)
+
+      dest = destination(qc.current - 1, removed, qc.top_values)
+      dest_next = Map.get(qc.successors, dest)
+
+      new_successors =
+        qc.successors
+        |> Map.put(qc.current, Map.get(qc.successors, last))
+        |> Map.put(dest, head)
+        |> Map.put(last, dest_next)
+
+      %{qc | successors: new_successors, current: Map.get(new_successors, qc.current)}
+    end
+
+    def cups(qc) do
+      read(qc, 1, map_size(qc.successors))
+      |> Enum.reverse
+      |> tl
+      |> Enum.reverse
+    end
+
+    defp read(_qc, _curr, 0), do: []
+
+    defp read(qc, curr, count) do
+      next = Map.get(qc.successors, curr)
+
+      [next | read(qc, next, count - 1)]
+    end
+
+    defp with_successor([last], first), do: [{last, first}]
+    defp with_successor([current, succ | rest], first) do
+      [{current, succ} | with_successor([succ | rest], first)]
+    end
+
+    defp destination(0, removed, top_values) do
+      hd(top_values -- removed)
+    end
+
+    defp destination(value, removed, top_values) do
+      if value in removed do
+        destination(value - 1, removed, top_values)
+      else
+        value
+      end
+    end
+  end
+
+  def go_crab(initial_digits) do
+    max = Enum.max(initial_digits)
+    cups = initial_digits ++ Enum.to_list((max+1)..1_000_000)
+    total_moves = 10_000_000
+    circle = QuickCircle.new(cups) |> quick_moves(total_moves)
+
+    QuickCircle.cups(circle)
+    |> Enum.take(2)
+    |> Enum.reduce(1, &Kernel.*/2)
+  end
+
+  def moves(circle, 0), do: circle
+  def moves(circle, count) do
+    circle |> Circle.move |> moves(count - 1)
+  end
+
+  def quick_moves(circle, 0), do: circle
+  def quick_moves(circle, count) do
+    circle |> QuickCircle.move |> quick_moves(count - 1)
   end
 end

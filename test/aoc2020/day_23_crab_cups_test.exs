@@ -1,7 +1,8 @@
 defmodule Aoc2020.Day23CrabCupsTest do
   use ExUnit.Case, async: true
 
-  alias Aoc2020.Day23CrabCups.{Circle, CyclicZipperList}
+  import Aoc2020.Day23CrabCups
+  alias Aoc2020.Day23CrabCups.{Circle, CyclicZipperList, QuickCircle}
 
   test "cyclic zip list" do
     zip = CyclicZipperList.new([1,2,3,4])
@@ -54,9 +55,25 @@ defmodule Aoc2020.Day23CrabCupsTest do
     IO.puts("Part 1: #{result}")
   end
 
-  defp moves(circle, 0), do: circle
+  test "quick moves" do
+    original = 389125467 |> Integer.digits |> QuickCircle.new
 
-  defp moves(circle, count) do
-    circle |> Circle.move |> moves(count - 1)
+    assert quick_moves(original, 10) |> QuickCircle.cups == Integer.digits(92658374)
+    assert quick_moves(original, 100) |> QuickCircle.cups == Integer.digits(67384529)
+  end
+
+  test "crab rules" do
+    assert 389125467 |> Integer.digits |> go_crab == 149245887792
+  end
+
+  test "part 2" do
+    result =
+      Input.ints(23)
+      |> hd
+      |> Integer.digits
+      |> go_crab
+
+    IO.puts("")
+    IO.puts("Part 2: #{result}")
   end
 end
