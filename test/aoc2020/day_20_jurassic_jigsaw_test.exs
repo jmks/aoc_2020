@@ -121,28 +121,20 @@ defmodule Aoc2020.Day20JurassicJigsawTest do
         "..###..###",
         ".#####..#.",
         "...#.##..#"
+      ],
+      body: [
+        "..##.#..#.",
+        "##..#.....",
+        "#...##..#.",
+        "####.#...#",
+        "##.##.###.",
+        "##...#.###",
+        ".#.#.#..##",
+        "..#....#..",
+        "###...#.#.",
+        "..###..###"
       ]
     }
-  end
-
- test "put tiles together" do
-    assert edges([%{
-          id: "2311",
-          sides: [
-            "..##.#..#.",
-            "..###..###",
-            ".#####..#.",
-            "...#.##..#"
-          ]}]) == %{
-      "..##.#..#." => ["2311"],
-      ".#..#.##.." => ["2311"],
-      "..###..###" => ["2311"],
-      "###..###.." => ["2311"],
-      ".#####..#." => ["2311"],
-      ".#..#####." => ["2311"],
-      "...#.##..#" => ["2311"],
-      "#..##.#..." => ["2311"]
-      }
   end
 
  test "solve" do
@@ -159,6 +151,54 @@ defmodule Aoc2020.Day20JurassicJigsawTest do
 
    IO.puts("Part 1: #{result}")
    IO.puts("")
+ end
+
+ test "rotate" do
+   tile = @test |> tilize |> hd |> parse_tile |> Map.put(:rotation, :none)
+   assert rotate(:none, tile, %{}) == %{
+     body: ["..##.#..#.", "##..#.....", "#...##..#.", "####.#...#", "##.##.###.",
+            "##...#.###", ".#.#.#..##", "..#....#..", "###...#.#.", "..###..###"],
+     id: "2311",
+     sides: ["..##.#..#.", "..###..###", ".#####..#.", "...#.##..#"]
+   }
+
+   tile = Map.put(tile, :rotation, :flip_vertical)
+   assert rotate(:none, tile, %{}) == %{
+     body: ["..###..###", "###...#.#.", "..#....#..", ".#.#.#..##", "##...#.###",
+            "##.##.###.", "####.#...#", "#...##..#.", "##..#.....", "..##.#..#."],
+     id: "2311",
+     sides: ["..###..###", "..##.#..#.", ".#..#####.", "#..##.#..."]
+   }
+
+   tiles = @test |> tilize() |> Enum.map(&parse_tile/1)
+   edges = edges(tiles)
+   corner = Enum.find(edges |> Map.values |> List.flatten, fn %{id: id} -> id == "1951" end)
+
+   rotate(:top_left, corner, edges)
+ end
+
+ test "direction" do
+   # example:
+   # 1 2 3  :right :right :bottom
+   # 6 5 4  :bottom  :left  :left
+   # 7 8 9  :right :right
+
+   assert direction(1, 3) == :right
+   assert direction(2, 3) == :right
+   assert direction(3, 3) == :bottom
+   assert direction(4, 3) == :left
+   assert direction(5, 3) == :left
+   assert direction(6, 3) == :bottom
+   assert direction(7, 3) == :right
+   assert direction(8, 3) == :right
+ end
+
+ test "arranging tiles" do
+   assert arrange(@test |> tilize() |> Enum.map(&parse_tile/1)) |> Enum.map(&Access.get(&1, :id)) |> Enum.map(&String.to_integer/1) == [
+     1171, 2473, 3079,
+     2311, 1427, 1489,
+     2971, 2729, 1951
+   ]
  end
 
   def tilize(lines) do
