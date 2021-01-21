@@ -164,6 +164,105 @@ For reference, the IDs of the above tiles are:
 To check that you've assembled the image correctly, multiply the IDs of the four corner tiles together. If you do this with the assembled tiles from the example above, you get 1951 * 3079 * 2971 * 1171 = 20899048083289.
 
 Assemble the tiles into an image. What do you get if you multiply together the IDs of the four corner tiles?
+
+--- Part Two ---
+
+Now, you're ready to check the image for sea monsters.
+
+The borders of each tile are not part of the actual image; start by removing them.
+
+In the example above, the tiles become:
+
+.#.#..#. ##...#.# #..#####
+###....# .#....#. .#......
+##.##.## #.#.#..# #####...
+###.#### #...#.## ###.#..#
+##.#.... #.##.### #...#.##
+...##### ###.#... .#####.#
+....#..# ...##..# .#.###..
+.####... #..#.... .#......
+
+#..#.##. .#..###. #.##....
+#.####.. #.####.# .#.###..
+###.#.#. ..#.#### ##.#..##
+#.####.. ..##..## ######.#
+##..##.# ...#...# .#.#.#..
+...#..#. .#.#.##. .###.###
+.#.#.... #.##.#.. .###.##.
+###.#... #..#.##. ######..
+
+.#.#.### .##.##.# ..#.##..
+.####.## #.#...## #.#..#.#
+..#.#..# ..#.#.#. ####.###
+#..####. ..#.#.#. ###.###.
+#####..# ####...# ##....##
+#.##..#. .#...#.. ####...#
+.#.###.. ##..##.. ####.##.
+...###.. .##...#. ..#..###
+
+Remove the gaps to form the actual image:
+
+.#.#..#.##...#.##..#####
+###....#.#....#..#......
+##.##.###.#.#..######...
+###.#####...#.#####.#..#
+##.#....#.##.####...#.##
+...########.#....#####.#
+....#..#...##..#.#.###..
+.####...#..#.....#......
+#..#.##..#..###.#.##....
+#.####..#.####.#.#.###..
+###.#.#...#.######.#..##
+#.####....##..########.#
+##..##.#...#...#.#.#.#..
+...#..#..#.#.##..###.###
+.#.#....#.##.#...###.##.
+###.#...#..#.##.######..
+.#.#.###.##.##.#..#.##..
+.####.###.#...###.#..#.#
+..#.#..#..#.#.#.####.###
+#..####...#.#.#.###.###.
+#####..#####...###....##
+#.##..#..#...#..####...#
+.#.###..##..##..####.##.
+...###...##...#...#..###
+
+Now, you're ready to search for sea monsters! Because your image is monochrome, a sea monster will look like this:
+
+                  #
+#    ##    ##    ###
+ #  #  #  #  #  #
+
+When looking for this pattern in the image, the spaces can be anything; only the # need to match. Also, you might need to rotate or flip your image before it's oriented correctly to find sea monsters. In the above image, after flipping and rotating it to the appropriate orientation, there are two sea monsters (marked with O):
+
+.####...#####..#...###..
+#####..#..#.#.####..#.#.
+.#.#...#.###...#.##.O#..
+#.O.##.OO#.#.OO.##.OOO##
+..#O.#O#.O##O..O.#O##.##
+...#.#..##.##...#..#..##
+#.##.#..#.#..#..##.#.#..
+.###.##.....#...###.#...
+#.####.#.#....##.#..#.#.
+##...#..#....#..#...####
+..#.##...###..#.#####..#
+....#.##.#.#####....#...
+..##.##.###.....#.##..#.
+#...#...###..####....##.
+.#.##...#.##.#.#.###...#
+#.###.#..####...##..#...
+#.###...#.##...#.##O###.
+.O##.#OO.###OO##..OOO##.
+..O#.O..O..O.#O##O##.###
+#.#..##.########..#..##.
+#.#####..#.#...##..#....
+#....##..#.#########..##
+#...#.....#..##...###.##
+#..###....##.#...##.##.#
+
+Determine how rough the waters are in the sea monsters' habitat by counting the number of # that are not part of a sea monster. In the above example, the habitat's water roughness is 273.
+
+How many # are not part of a sea monster?
 """
   def parse_tile(lines) do
     [id_line | tile] = lines
@@ -382,4 +481,184 @@ Assemble the tiles into an image. What do you get if you multiply together the I
         map
     end)
   end
+
+  def image(arrangement) do
+    side_length = length(arrangement) |> :math.sqrt |> round
+
+    arrangement
+    |> Enum.map(fn %{body: body} ->
+      len = length(body)
+
+      body
+      |> Enum.slice(1..(len - 2))
+      |> Enum.map(fn str ->
+        len = String.length(str)
+
+        String.slice(str, 1..(len - 2)) |> String.codepoints
+      end)
+    end)
+    |> Enum.chunk_every(side_length)
+    |> Enum.with_index
+    |> Enum.flat_map(fn {chunk, index} ->
+      chunk = if rem(index, 2) == 0, do: chunk, else: Enum.reverse(chunk)
+
+      chunk
+      |> Enum.zip
+      |> Enum.map(&Tuple.to_list/1)
+      |> Enum.map(&List.flatten/1)
+    end)
+  end
+
+  def rotate_until_monsters(image) do
+    flipped_images = [
+      image,
+      flip_image(image, :horizontal),
+      flip_image(image, :vertical)
+    ]
+    image_with_monster = Enum.find(flipped_images, &has_monster?/1)
+
+    image_with_monster || rotate_until_monsters(rotate_image(image))
+  end
+
+  def monsters_in_rotation(image) do
+    do_monsters_in_rotation(image, [])
+  end
+
+  defp do_monsters_in_rotation(image, rotations) when length(rotations) == 12 do
+    rotations
+  end
+
+  defp do_monsters_in_rotation(image, rotations) do
+    new_rotations = [
+      {:none, count_monsters(image)},
+      {:h, count_monsters(flip_image(image, :horizontal))},
+      {:v, count_monsters(flip_image(image, :vertical))}
+    ]
+
+    do_monsters_in_rotation(rotate_image(image), new_rotations ++ rotations)
+  end
+
+  def roughness(arrangement) do
+    image = image(arrangement)
+
+    [
+      image,
+      image |> rotate_image,
+      image |> rotate_image |> rotate_image,
+      image |> rotate_image |> rotate_image |> rotate_image,
+    ]
+    |> Enum.map(&roughness(coordinates(&1), rough_waters(&1), rough_waters(&1)))
+    |> Enum.min
+  end
+
+  defp roughness([], _original, waters), do: MapSet.size(waters)
+
+  defp roughness([coordinate | rest], original, outer_waters) do
+    new_waters =
+      seamonster_coordinates(coordinate, original)
+      |> Enum.reduce(outer_waters, fn coordinate, waters ->
+        MapSet.delete(waters, coordinate)
+      end)
+
+    roughness(rest, original, new_waters)
+  end
+
+  def rotate_image(image) do
+    image
+    |> Enum.zip
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.map(&Enum.reverse/1)
+  end
+
+  defp flip_image(image, :horizontal) do
+    Enum.map(image, &Enum.reverse/1)
+  end
+
+  defp flip_image(image, :vertical) do
+    Enum.reverse(image)
+  end
+
+  def coordinates(image) do
+    rows = length(image)
+    cols = length(hd(image))
+
+    for row <- 0..(rows - 1), col <- 0..(cols - 1), do: {row, col}
+  end
+
+  def rough_waters(image) do
+    image
+    |> Enum.with_index
+    |> Enum.reduce(MapSet.new, fn {row, rindex}, outer_set ->
+      row
+      |> Enum.with_index
+      |> Enum.filter(fn
+        {"#", _} -> true
+        ________ -> false
+      end)
+      |> Enum.reduce(outer_set, fn {_, cindex}, set ->
+        MapSet.put(set, {rindex, cindex})
+      end)
+    end)
+  end
+
+  defp has_monster?(image) do
+    waters = rough_waters(image)
+
+    coordinates(image)
+    |> Enum.any?(fn coordinate ->
+      monster = seamonster(coordinate, {1, 1})
+      Enum.all?(monster, &MapSet.member?(waters, &1))
+    end)
+  end
+
+  def count_monsters(image) do
+    waters = rough_waters(image)
+
+    coordinates(image)
+    |> Enum.count(fn coordinate ->
+      monster = seamonster(coordinate, {1, 1})
+
+      Enum.all?(monster, &MapSet.member?(waters, &1))
+    end)
+  end
+
+  def seamonster_coordinates(coordinate, waters) do
+    [
+      seamonster(coordinate, {1, 1}),
+      seamonster(coordinate, {1, -1}),
+      seamonster(coordinate, {-1, 1}),
+      seamonster(coordinate, {-1, -1})
+    ]
+    |> Enum.map(&matching(waters, &1))
+    |> List.flatten
+  end
+
+  def matching(set, coordinates) do
+    if Enum.all?(coordinates, &MapSet.member?(set, &1)) do
+      coordinates
+    else
+      []
+    end
+  end
+
+  def seamonster(coordinate, {rot_x, rot_y}) do
+    seamonster_offsets()
+    |> Enum.map(fn {x, y} ->
+      add({rot_x * x, rot_y * y}, coordinate)
+    end)
+  end
+
+  # the leading # is not part of the pattern:
+  #                  #
+  ##    ##    ##    ###
+  # #  #  #  #  #  #
+  defp seamonster_offsets do
+    [
+      {0, 18},
+      {1, 0}, {1, 5}, {1, 6}, {1, 11}, {1, 12}, {1, 17}, {1, 18}, {1, 19},
+      {2, 1}, {2, 4}, {2, 7}, {2, 10}, {2, 13}, {2, 16}
+    ]
+  end
+
+  defp add({xo, yo}, {x1, y1}), do: {xo + x1, yo + y1}
 end
